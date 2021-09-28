@@ -1,0 +1,13 @@
+_target_: src.models.transformer_model.TransformerModel
+
+architecture: gpt2
+lr: 0.0001
+num_velocity_bins: ${num_velocity_bins}
+steps_per_second: ${steps_per_second}
+n_positions: ${max_seq}
+d_embed: 768
+n_head: 12
+d_inner: 3072
+n_layer: 12
+mem_len: 200
+clamp_len: 1000
