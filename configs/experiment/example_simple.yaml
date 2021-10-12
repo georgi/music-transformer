@@ -5,8 +5,8 @@
 
 defaults:
   - override /trainer: default.yaml # choose trainer from 'configs/trainer/'
-  - override /model: mnist_model.yaml
-  - override /datamodule: mnist_datamodule.yaml
+  - override /model: transformer_model.yaml
+  - override /datamodule: sequence_datamodule.yaml
   - override /callbacks: default.yaml
   - override /logger: null
 
@@ -21,11 +21,7 @@ trainer:
   gradient_clip_val: 0.5
 
 model:
-  lin1_size: 128
-  lin2_size: 256
-  lin3_size: 64
   lr: 0.002
 
 datamodule:
   batch_size: 64
-  train_val_test_split: [55_000, 5_000, 10_000]

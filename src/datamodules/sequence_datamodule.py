@@ -1,11 +1,15 @@
 import os
 from random import randrange
-from typing import Optional
+from typing import Optional, List
+from note_seq.protobuf.music_pb2 import NoteSequence
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader
 from .datasets.sequence_dataset import SequenceDataset
 from ..models.performance_encoder import PerformanceEncoder
 from ..data import load_sequence
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def train_test_split(dataset, split=0.90):
@@ -25,12 +29,19 @@ def load_datasets(
     time_augment,
     transpose_augment,
 ):
-    sequences = [
+    sequences: List[NoteSequence] = [
         load_sequence(os.path.join(data_dir, f))
         for f in os.listdir(data_dir)
     ]
 
-    print(f"Found {len(sequences)} sequence files")
+    logger.info(f"Found {len(sequences)} sequence files")
+
+    sequences = [
+        ns for ns in sequences
+        if len(ns.notes) >= max_seq  # type: ignore
+    ]
+
+    logger.info(f"Valid sequences: {len(sequences)}")
 
     train_seqs, valid_seqs = train_test_split(sequences)
 
@@ -94,6 +105,9 @@ class SequenceDataModule(LightningDataModule):
 
 
     def prepare_data(self):
+        pass
+
+    def setup(self, stage: Optional[str] = None):
         self.train_data, self.val_data = load_datasets(
             midi_encoder=self.encoder,
             data_dir=self.data_dir,
@@ -101,9 +115,6 @@ class SequenceDataModule(LightningDataModule):
             time_augment=self.time_augment,
             transpose_augment=self.transpose_augment
         )
-
-    def setup(self, stage: Optional[str] = None):
-        pass
 
     def train_dataloader(self):
         return DataLoader(

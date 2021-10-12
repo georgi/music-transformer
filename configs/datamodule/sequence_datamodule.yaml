@@ -1,7 +1,7 @@
 _target_: src.datamodules.sequence_datamodule.SequenceDataModule
 
 data_dir: ${data_dir} # data_dir is specified in config.yaml
-batch_size: 2
+batch_size: 1
 num_workers: 8
 pin_memory: True
 num_velocity_bins: ${num_velocity_bins}
