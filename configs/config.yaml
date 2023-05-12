@@ -46,4 +46,4 @@ num_velocity_bins: 32
 steps_per_second: 192
 max_seq: 1024
 
-load_weights: None
+load_weights: False

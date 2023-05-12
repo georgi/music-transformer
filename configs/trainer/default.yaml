@@ -2,14 +2,15 @@ _target_: pytorch_lightning.Trainer
 
 gpus: 1
 
-min_epochs: 10
-max_epochs: 10000
+min_epochs: 1
+max_epochs: 20
 
 # plugins: "ddp_sharded"
 
-gradient_clip_val: 0.5
+gradient_clip_val: 1.0
 gradient_clip_algorithm: "value"
 
 weights_summary: "full"
 progress_bar_refresh_rate: 10
+val_check_interval: 10000
 resume_from_checkpoint: null

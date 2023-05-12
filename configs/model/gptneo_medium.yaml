@@ -13,3 +13,6 @@ n_embed: 1024
 n_head: 16
 n_layer: 16
 gradient_checkpointing: false
+embed_dropout: 0.1
+attention_dropout: 0.1
+resid_dropout: 0.1
