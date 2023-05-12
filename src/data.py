@@ -1,9 +1,13 @@
 import random
 import torch
 import os
+import pandas as pd
+from typing import List
 from concurrent.futures import ProcessPoolExecutor
 from tqdm import tqdm
 from note_seq.protobuf.music_pb2 import NoteSequence
+
+from .models.performance_encoder import PerformanceEncoder
 
 
 def load_sequence(fname):
@@ -46,12 +50,12 @@ def trim_sequence(seq, max_seq, token_pad, random_offset=False):
     return x
 
 
-def save_sequence(ns, path):
+def save_sequence(ns: NoteSequence, path: str):
     with open(path, 'wb') as f:
-        f.write(ns.SerializeToString())
+        f.write(ns.SerializeToString())  # type: ignore
 
 
-def convert_midi_to_proto(midi_encoder, src, dest_dir):
+def convert_midi_to_proto(midi_encoder: PerformanceEncoder, src: str, dest_dir: str) -> List[NoteSequence]:
     res = []
     for i, ns in enumerate(midi_encoder.load_midi(src)):
         fname = os.path.join(dest_dir, os.path.basename(src) + f'-{i}.pb')
@@ -71,4 +75,24 @@ def convert_midi_to_proto_folder(midi_encoder, src_dir, dest_dir, max_workers=10
         ]
         for future in tqdm(futures):
             res.extend(future.result())
+
+
+def convert_maestro_to_proto(src_dir: str, dest_dir: str, max_workers: int =10):
+    df: pd.DataFrame = pd.read_csv("data/maestro-v3.0.0.csv")  # type: ignore
+    midi_encoder = PerformanceEncoder(32, 192)
+    for split in ["train", "test", "validation"]:
+        os.makedirs(os.path.join(dest_dir, split), exist_ok=True)
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        res = []
+        futures = [
+            executor.submit(
+                convert_midi_to_proto,
+                midi_encoder,
+                os.path.join(src_dir, row.midi_filename),  # type: ignore
+                os.path.join(dest_dir, row.split))  # type: ignore
+            for row in df.itertuples()
+        ]
+        for future in tqdm(futures):
+            res.extend(future.result())
+
 

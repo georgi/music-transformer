@@ -40,7 +40,7 @@ def train(config: DictConfig) -> Optional[float]:
     log.info(f"Instantiating model <{config.model._target_}>")
     model: LightningModule = hydra.utils.instantiate(config.model)
 
-    if config.load_weights is not None:
+    if config.load_weights:
         ckpt = torch.load(config.load_weights, map_location='cpu')
         model.load_state_dict(ckpt['state_dict'])
 

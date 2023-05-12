@@ -1,4 +1,4 @@
-from typing import Any, Union, List, Tuple
+from typing import Any, Union, List, Tuple, OrderedDict
 
 import torch
 from pytorch_lightning import LightningModule
@@ -28,7 +28,10 @@ class TransformerModel(LightningModule):
         n_head: int,
         n_embed: int,
         attention_types: List[Any],
-        architecture: str,
+        architecture: str = 'gptneo',
+        embed_dropout: float = 0.1,
+        attention_dropout: float = 0.1,
+        resid_dropout: float = 0.1,
         gradient_checkpointing: bool = False
     ):
         super().__init__()
@@ -84,6 +87,9 @@ class TransformerModel(LightningModule):
                 attention_types=attention_types,
                 hidden_size=n_embed,
                 num_heads=n_head,
+                embed_dropout=embed_dropout,
+                attention_dropout=attention_dropout,
+                resid_dropout=resid_dropout,
                 use_cache=not gradient_checkpointing,
                 gradient_checkpointing=gradient_checkpointing
             )

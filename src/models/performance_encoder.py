@@ -7,6 +7,8 @@ from note_seq.sequences_lib import (
     apply_sustain_control_changes,
     split_note_sequence_on_silence,
     quantize_note_sequence_absolute,
+    stretch_note_sequence,
+    transpose_note_sequence,
 )
 from note_seq import (
     PerformanceOneHotEncoding,
@@ -60,7 +62,7 @@ class PerformanceEncoder:
 
         return event_ids + [self.token_eos]
 
-    def decode_ids(self, ids):
+    def decode_ids(self, ids: List[int]) -> NoteSequence:
         assert(max(ids) < self.vocab_size)
         assert(min(ids) >= 0)
 
@@ -77,7 +79,7 @@ class PerformanceEncoder:
 
         return performance.to_sequence()
 
-    def load_midi(self, path):
+    def load_midi(self, path: str) -> List[NoteSequence]:
         try:
             midi = pretty_midi.PrettyMIDI(path)
         except Exception as e:
@@ -87,6 +89,12 @@ class PerformanceEncoder:
         ns = apply_sustain_control_changes(ns)
         # after applying sustain, we don't need control changes anymore
         del ns.control_changes[:]
-        return split_note_sequence_on_silence(ns)
-
-
+        seqs = split_note_sequence_on_silence(ns)
+        res = []
+        for seq in seqs:
+            for pitch in [-2, -1, 0, 1, 2]:
+                for stretch in [0.95, 0.975, 1.0, 1.025, 1.05]:
+                    ns = transpose_note_sequence(seq, pitch)[0]
+                    ns = stretch_note_sequence(ns, stretch)
+                    res.append(ns)
+        return res
