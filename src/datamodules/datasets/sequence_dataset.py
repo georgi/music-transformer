@@ -9,6 +9,24 @@ from ...models.performance_encoder import PerformanceEncoder
 
 
 class SequenceDataset(IterableDataset):
+    """
+    This Python module defines a class `SequenceDataset` which inherits from PyTorch's `IterableDataset`. The purpose of the `SequenceDataset` class is to load, process, and iterate over a list of MIDI sequence files for use in machine learning tasks, such as training a model to generate music. 
+
+    The class has several key attributes:
+
+    - `seq_length`: The length of the sequences to be yielded by the iterator.
+    - `midi_encoder`: An instance of `PerformanceEncoder` used to encode MIDI sequences.
+    - `sequence_files`: A list of file paths of the MIDI sequence files.
+    - `max_iter`: The maximum number of iterations the iterator should make.
+
+    The class has several key methods:
+
+    - `__init__`: Initializes the `SequenceDataset` instance with the necessary parameters, like the list of sequence files, the sequence length, the MIDI encoder, and optionally the maximum number of iterations.
+    - `load_seq`: Loads and encodes a MIDI sequence from a given file path.
+    - `__iter__`: Returns an iterator that yields encoded MIDI sequences of a specific length from the list of files. If the data loading happens in a worker process, the list of sequence files is evenly distributed among workers. The order of the sequence files is randomized to ensure that the model is exposed to a variety of training samples. If `max_iter` is specified and the number of yielded sequences reaches this limit, the iterator stops.
+
+    This class is designed to be used in conjunction with PyTorch's DataLoader, which allows for efficient loading of data in parallel using multi-threading.
+    """
     seq_length: int
     midi_encoder: PerformanceEncoder
     sequence_files: List[str]
