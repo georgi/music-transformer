@@ -18,6 +18,43 @@ from note_seq.protobuf.music_pb2 import NoteSequence
 
 
 class PerformanceEncoder:
+    """
+    This Python module contains the class `PerformanceEncoder` which is designed to 
+    perform the task of encoding and decoding musical performances. The class uses a 
+    number of functionalities from the `note_seq` library, a Python library created 
+    by the Magenta project at Google, designed for music generation tasks.
+
+    The `PerformanceEncoder` class primarily consists of two methods: `encode_note_sequence` 
+    and `decode_ids`. The `encode_note_sequence` method takes a `NoteSequence` object and
+    converts it into a list of integer IDs. Conversely, the `decode_ids` method takes a 
+    list of integer IDs and converts it back into a `NoteSequence`. The class also includes 
+    a method `load_midi` to load and preprocess MIDI files.
+
+    Key details about the `PerformanceEncoder` class:
+
+    1. **Steps Per Second**: This is a parameter that determines how the note sequence is 
+        quantized. It represents the number of time steps per second.
+
+    2. **Reserved IDs**: The class reserves a few IDs for special tokens like padding, 
+        start of sequence, and end of sequence.
+
+    3. **Velocity Bins**: The number of bins used to quantize note velocities. The velocity 
+        of a note represents the force or speed with which a key is pressed.
+
+    4. **PerformanceOneHotEncoding**: This is an encoding scheme used to convert event objects into integer IDs.
+
+    5. **Vocabulary Size**: This is the total number of unique IDs that can be generated, 
+        which is the sum of the number of classes in the `PerformanceOneHotEncoding` and the number of reserved IDs.
+
+    In the `load_midi` method, multiple versions of each musical sequence are created by 
+    transposing and stretching the original sequence. This could be used as a data augmentation 
+    technique to generate a more robust model.
+
+    The `PerformanceEncoder` class encapsulates the conversion between musical performances and 
+    a format that can be processed by machine learning algorithms. It provides the necessary tools 
+    for transforming musical data into a form suitable for machine learning tasks, such as music 
+    generation or music understanding.
+    """
     steps_per_second: int
     num_reserved_ids: int
     token_pad: int
