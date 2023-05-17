@@ -14,6 +14,12 @@ def load_datasets(
     data_dir: str,
     max_seq: int,
 ):
+    """
+    The load_datasets function loads MIDI sequence datasets from a specified 
+    directory for each data split (training, validation, and testing). 
+    It uses a PerformanceEncoder to process MIDI files and caps the sequences 
+    at a specified maximum length.
+    """
     datasets = []
     for split in ['train', 'validation', 'test']:
         split_dir = os.path.join(data_dir, split)
@@ -35,6 +41,17 @@ def load_datasets(
 
 
 class SequenceDataModule(LightningDataModule):
+    """
+    This module provides a data handling infrastructure for a machine 
+    learning task involving sequence data, specifically MIDI data. It is 
+    designed to work with the PyTorch Lightning framework.
+
+    The SequenceDataModule class provides DataLoader instances for the training, 
+    validation, and testing datasets. These DataLoader instances can be directly 
+    used in a PyTorch Lightning training loop. It should be noted that the prepare_data 
+    method is currently empty, suggesting that any preprocessing or data preparation steps
+    happen outside of this class or are encapsulated within the SequenceDataset or PerformanceEncoder.
+    """
     data_dir: str
     max_seq: int
     batch_size: int
