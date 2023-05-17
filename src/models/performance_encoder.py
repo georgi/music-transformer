@@ -80,6 +80,11 @@ class PerformanceEncoder:
         self.vocab_size = self.encoding.num_classes + self.num_reserved_ids
 
     def encode_note_sequence(self, ns: NoteSequence) -> List[int]:
+        """
+        Encode a NoteSequence into a list of integer IDs.
+
+        The list of IDs will start with the start-of-sequence token and end with the end-of-sequence token.
+        """
         performance = Performance(
             quantize_note_sequence_absolute(
                 ns,
@@ -100,6 +105,9 @@ class PerformanceEncoder:
         return event_ids + [self.token_eos]
 
     def decode_ids(self, ids: List[int]) -> NoteSequence:
+        """
+        Decode a list of integer IDs into a NoteSequence.
+        """
         assert(max(ids) < self.vocab_size)
         assert(min(ids) >= 0)
 
@@ -116,7 +124,10 @@ class PerformanceEncoder:
 
         return performance.to_sequence()
 
-    def load_midi(self, path: str) -> List[NoteSequence]:
+    def load_midi_sequences(self, path: str) -> List[NoteSequence]:
+        """
+        Load and split the MIDI file on silence and return a list of NoteSequence objects.
+        """
         try:
             midi = pretty_midi.PrettyMIDI(path)
         except Exception as e:
@@ -127,10 +138,16 @@ class PerformanceEncoder:
         # after applying sustain, we don't need control changes anymore
         del ns.control_changes[:]
         seqs = split_note_sequence_on_silence(ns)
+        return seqs
+
+    def augment_sequences(self, seqs: List[NoteSequence]) -> List[NoteSequence]:
+        """
+        Augment the NoteSequence objects by transposing and stretching them.
+        """
         res = []
         for seq in seqs:
-            for pitch in [-2, -1, 0, 1, 2]:
-                for stretch in [0.95, 0.975, 1.0, 1.025, 1.05]:
+            for pitch in [-4, -3, -2, -1, 0, 1, 2]:
+                for stretch in [1 - (1./4), 1 - (1./8), 1 - (1./16), 1.0, 1 + (1./16), 1 + (1./8)]:
                     ns = transpose_note_sequence(seq, pitch)[0]
                     ns = stretch_note_sequence(ns, stretch)
                     res.append(ns)

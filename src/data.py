@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import random
 import torch
 import os
@@ -6,6 +7,9 @@ from typing import List
 from concurrent.futures import ProcessPoolExecutor
 from tqdm import tqdm
 from note_seq.protobuf.music_pb2 import NoteSequence
+import requests
+from tqdm import tqdm
+import zipfile
 
 from .models.performance_encoder import PerformanceEncoder
 
@@ -88,7 +92,7 @@ def convert_midi_to_proto(
     Convert a MIDI file to a list of NoteSequences and save them to a directory.
     """
     res = []
-    for i, ns in enumerate(midi_encoder.load_midi(src)):
+    for i, ns in enumerate(midi_encoder.load_midi_sequences(src)):
         fname = os.path.join(dest_dir, os.path.basename(src) + f"-{i}.pb")
         save_sequence(ns, fname)
         res.append(fname)
@@ -116,7 +120,7 @@ def convert_midi_to_proto_folder(midi_encoder, src_dir, dest_dir, max_workers=10
             res.extend(future.result())
 
 
-def convert_maestro_to_proto(src_dir: str, dest_dir: str, max_workers: int = 10):
+def convert_maestro_to_proto(data_dir: str, max_workers: int = 10):
     """
     Convert the MAESTRO dataset to the proto format.
 
@@ -125,10 +129,12 @@ def convert_maestro_to_proto(src_dir: str, dest_dir: str, max_workers: int = 10)
         dest_dir: The directory to save the proto files.
         max_workers: The number of workers to use for the conversion.
     """
-    df: pd.DataFrame = pd.read_csv("data/maestro-v3.0.0.csv")  # type: ignore
-    midi_encoder = PerformanceEncoder(32, 192)
+    src_dir = os.path.join(data_dir, "maestro-v3.0.0")
+    csv_file = os.path.join(data_dir, "maestro-v3.0.0.csv")
+    df: pd.DataFrame = pd.read_csv(csv_file)
+    midi_encoder = PerformanceEncoder(32, 96)
     for split in ["train", "test", "validation"]:
-        os.makedirs(os.path.join(dest_dir, split), exist_ok=True)
+        os.makedirs(os.path.join(data_dir, split), exist_ok=True)
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         res = []
         futures = [
@@ -136,9 +142,42 @@ def convert_maestro_to_proto(src_dir: str, dest_dir: str, max_workers: int = 10)
                 convert_midi_to_proto,
                 midi_encoder,
                 os.path.join(src_dir, row.midi_filename),  # type: ignore
-                os.path.join(dest_dir, row.split),
+                os.path.join(data_dir, row.split),  # type: ignore
             )  # type: ignore
             for row in df.itertuples()
         ]
         for future in tqdm(futures):
             res.extend(future.result())
+
+
+maestro_zip = "https://storage.googleapis.com/magentadata/datasets/maestro/v3.0.0/maestro-v3.0.0-midi.zip"
+
+def download_file(url: str, fname: str):
+    response = requests.get(url, stream=True)
+
+    total_size_in_bytes = int(response.headers.get('content-length', 0))
+    block_size = 1024
+    progress_bar = tqdm(total=total_size_in_bytes, unit='iB', unit_scale=True)
+
+    with open(fname, 'wb') as file:
+        for data in response.iter_content(block_size):
+            progress_bar.update(len(data))
+            file.write(data)
+
+    progress_bar.close()
+
+
+def download_and_exctract_maestro(dest_dir: str):
+    """
+    Download and extract the MAESTRO dataset.
+
+    Args:
+        dest_dir: The directory to save the dataset to.
+    """
+    if os.path.exists(os.path.join(dest_dir, "maestro-v3.0.0")):
+        return
+    os.makedirs(dest_dir, exist_ok=True)
+    download_file(maestro_zip, os.path.join(dest_dir, "maestro.zip"))
+    with zipfile.ZipFile(os.path.join(dest_dir, "maestro.zip"), "r") as zip_ref:
+        zip_ref.extractall(dest_dir)
+

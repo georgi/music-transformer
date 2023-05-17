@@ -1,11 +1,13 @@
-import sys
+from src.data import convert_maestro_to_proto, download_and_exctract_maestro
 
-from src.data import convert_maestro_to_proto
+"""
+This scripts downloads the MAESTRO dataset and converts it to the proto format.
+"""
 
-if __name__ == '__main__':
-    dataset = sys.argv[1]
-    src_dir = sys.argv[2]
-    dest_dir = sys.argv[3]
+data_dir = "data"
 
-    convert_maestro_to_proto(src_dir, dest_dir)
+if __name__ == "__main__":
+    download_and_exctract_maestro(data_dir)
+
+    convert_maestro_to_proto(data_dir)
 
