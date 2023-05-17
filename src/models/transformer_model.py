@@ -16,6 +16,34 @@ from torch.optim.lr_scheduler import CyclicLR
 
 
 class TransformerModel(LightningModule):
+    """
+    This is a PyTorch Lightning module that defines a model using the Transformer architecture. 
+    The specific variant of the Transformer (GPT-2, GPTNeo, or TransfoXL) can be specified during
+    the model's initialization.
+
+    1. The `TransformerModel` class extends the `LightningModule`, which is PyTorch Lightning's 
+      base module class. It contains the logic for a full training/evaluation loop. The class contains 
+      a transformer model from the Hugging Face's `transformers` library, which can be one of three 
+      types: `TransfoXLLMHeadModel`, `GPT2LMHeadModel`, or `GPTNeoForCausalLM`.
+
+    2. The `__init__` method initializes the model. It takes a number of hyperparameters, including 
+      the learning rate, beta values for the Adam optimizer, epsilon value for numerical stability in Adam, 
+      weight decay for L2 regularization, the number of velocity bins and steps per second for the 
+      Performance Encoder, and transformer model-specific hyperparameters like the number of positions, 
+      layers, heads, and embeddings, attention types, and dropout rates. The architecture type is also specified here.
+
+    3. The `forward` method defines the forward pass of the model. It takes an input tensor `x`, 
+      passes it through the transformer model, and calculates the loss. The calculation of the loss differs
+      depending on the transformer architecture used.
+
+    4. The `training_step` and `validation_step` methods define what happens during one training or
+      validation step, respectively. They both calculate and return the loss, and log it for progress tracking.
+
+    5. The `configure_optimizers` method sets up the optimizer and learning rate scheduler to be used 
+      during training. It uses the Adam optimizer with parameters defined during initialization and 
+      a cyclic learning rate scheduler.
+
+    """
     transformer: Union[TransfoXLLMHeadModel, GPT2LMHeadModel, GPTNeoForCausalLM]
 
     def __init__(
