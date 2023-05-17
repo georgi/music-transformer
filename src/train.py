@@ -10,7 +10,7 @@ from pytorch_lightning import (
     Trainer,
     seed_everything,
 )
-from pytorch_lightning.loggers import LightningLoggerBase
+from pytorch_lightning.loggers.logger import Logger
 
 from .utils import utils
 
@@ -41,8 +41,8 @@ def train(config: DictConfig) -> Optional[float]:
     model: LightningModule = hydra.utils.instantiate(config.model)
 
     if config.load_weights:
-        ckpt = torch.load(config.load_weights, map_location='cpu')
-        model.load_state_dict(ckpt['state_dict'])
+        ckpt = torch.load(config.load_weights, map_location="cpu")
+        model.load_state_dict(ckpt["state_dict"])
 
     # Init lightning callbacks
     callbacks: List[Callback] = []
@@ -53,7 +53,7 @@ def train(config: DictConfig) -> Optional[float]:
                 callbacks.append(hydra.utils.instantiate(cb_conf))
 
     # Init lightning loggers
-    logger: List[LightningLoggerBase] = []
+    logger: List[Logger] = []
     if "logger" in config:
         for _, lg_conf in config.logger.items():
             if "_target_" in lg_conf:

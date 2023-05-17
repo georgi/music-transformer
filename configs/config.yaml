@@ -43,7 +43,7 @@ ignore_warnings: True
 test_after_training: True
 
 num_velocity_bins: 32
-steps_per_second: 192
+steps_per_second: 96
 max_seq: 1024
 
 load_weights: False
