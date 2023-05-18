@@ -8,11 +8,7 @@ weight_decay: 0.1
 num_velocity_bins: ${num_velocity_bins}
 steps_per_second: ${steps_per_second}
 n_positions: ${max_seq}
-attention_types: [[["global", "local"], 12, 12]]
 n_embed: 1024
-n_head: 16
-n_layer: 24
+n_head: 64
+n_layer: 32
 gradient_checkpointing: True
-attention_dropout: 0.1
-embed_dropout: 0.1
-resid_dropout: 0.1

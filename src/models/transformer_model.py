@@ -1,4 +1,4 @@
-from typing import Any, Union, List, Tuple, OrderedDict
+from typing import Any, Union, Tuple
 
 import torch
 from pytorch_lightning import LightningModule
@@ -7,8 +7,8 @@ from transformers import (
     TransfoXLLMHeadModel,
     GPT2Config,
     GPT2LMHeadModel,
-    GPTNeoConfig,
-    GPTNeoForCausalLM,
+    GPTNeoXConfig,
+    GPTNeoXForCausalLM,
 )
 from .performance_encoder import PerformanceEncoder
 from torch.optim import Adam
@@ -44,7 +44,7 @@ class TransformerModel(LightningModule):
       a cyclic learning rate scheduler.
 
     """
-    transformer: Union[TransfoXLLMHeadModel, GPT2LMHeadModel, GPTNeoForCausalLM]
+    transformer: Union[TransfoXLLMHeadModel, GPT2LMHeadModel, GPTNeoXForCausalLM]
 
     def __init__(
         self,
@@ -58,11 +58,7 @@ class TransformerModel(LightningModule):
         n_layer: int,
         n_head: int,
         n_embed: int,
-        attention_types: List[Any],
         architecture: str = "gptneo",
-        embed_dropout: float = 0.1,
-        attention_dropout: float = 0.1,
-        resid_dropout: float = 0.1,
         gradient_checkpointing: bool = False,
     ):
         super().__init__()
@@ -81,7 +77,6 @@ class TransformerModel(LightningModule):
                 "n_head": n_head,
                 "n_positions": n_positions,
                 "n_embed": n_embed,
-                "attention_types": attention_types,
                 "architecture": architecture,
             }
         )
@@ -112,20 +107,16 @@ class TransformerModel(LightningModule):
             )
             self.transformer = GPT2LMHeadModel(configuration)
         elif architecture == "gptneo":
-            configuration = GPTNeoConfig(
+            configuration = GPTNeoXConfig(
                 vocab_size=self.encoder.vocab_size,
                 max_position_embeddings=n_positions,
-                num_layers=n_layer,
-                attention_types=attention_types,
+                num_hidden_layers=n_layer,
                 hidden_size=n_embed,
-                num_heads=n_head,
-                embed_dropout=embed_dropout,
-                attention_dropout=attention_dropout,
-                resid_dropout=resid_dropout,
+                num_attention_heads=n_head,
                 use_cache=not gradient_checkpointing,
                 gradient_checkpointing=gradient_checkpointing,
             )
-            self.transformer = GPTNeoForCausalLM(configuration)
+            self.transformer = GPTNeoXForCausalLM(configuration)
         else:
             raise RuntimeError("unknown architecture: " + architecture)
 
