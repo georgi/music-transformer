@@ -3,7 +3,7 @@
 # specify here default training configuration
 defaults:
   - trainer: default.yaml
-  - model: gptneo_medium.yaml
+  - model: gptneo_large.yaml
   - datamodule: sequence_datamodule.yaml
   - callbacks: default.yaml # set this to null if you don't want to use callbacks
   - logger: many_loggers.yaml
