@@ -1,5 +1,4 @@
-from typing import Any, Union, Tuple
-
+from typing import Any, Union, Tuple, Optional
 import torch
 from pytorch_lightning import LightningModule
 from transformers import (

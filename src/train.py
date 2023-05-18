@@ -13,6 +13,7 @@ from pytorch_lightning import (
 from pytorch_lightning.loggers.logger import Logger
 
 from .utils import utils
+from .models.transformer_model import TransformerModel
 
 log = utils.get_logger(__name__)
 
@@ -38,11 +39,13 @@ def train(config: DictConfig) -> Optional[float]:
 
     # Init lightning model
     log.info(f"Instantiating model <{config.model._target_}>")
-    model: LightningModule = hydra.utils.instantiate(config.model)
-
-    if config.load_weights:
-        ckpt = torch.load(config.load_weights, map_location="cpu")
-        model.load_state_dict(ckpt["state_dict"])
+    if config.ckpt:
+        log.info(f"Loading weights from <{config.ckpt}>")
+        model: LightningModule = TransformerModel.load_from_checkpoint(
+            config.ckpt
+        )
+    else:
+        model: LightningModule = hydra.utils.instantiate(config.model)
 
     # Init lightning callbacks
     callbacks: List[Callback] = []
