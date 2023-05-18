@@ -79,6 +79,16 @@ class PerformanceEncoder:
         self.encoding = PerformanceOneHotEncoding(num_velocity_bins)
         self.vocab_size = self.encoding.num_classes + self.num_reserved_ids
 
+    @classmethod
+    def from_config(cls, config):
+        """
+        Create an instance of PerformanceEncoder from a Hydra config object.
+        """
+        return cls(
+            num_velocity_bins=config.num_velocity_bins,
+            steps_per_second=config.steps_per_second,
+        )
+
     def encode_note_sequence(self, ns: NoteSequence) -> List[int]:
         """
         Encode a NoteSequence into a list of integer IDs.

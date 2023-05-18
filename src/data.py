@@ -13,6 +13,8 @@ import zipfile
 
 from .models.performance_encoder import PerformanceEncoder
 
+maestro_zip = "https://storage.googleapis.com/magentadata/datasets/maestro/v3.0.0/maestro-v3.0.0-midi.zip"
+maestro_csv = "https://storage.googleapis.com/magentadata/datasets/maestro/v3.0.0/maestro-v3.0.0.csv"
 
 def load_sequence(fname: str):
     """
@@ -120,7 +122,9 @@ def convert_midi_to_proto_folder(midi_encoder, src_dir, dest_dir, max_workers=10
             res.extend(future.result())
 
 
-def convert_maestro_to_proto(data_dir: str, max_workers: int = 10):
+def convert_maestro_to_proto(data_dir: str, 
+                             midi_encoder: PerformanceEncoder,
+                             max_workers: int = 10):
     """
     Convert the MAESTRO dataset to the proto format.
 
@@ -131,8 +135,20 @@ def convert_maestro_to_proto(data_dir: str, max_workers: int = 10):
     """
     src_dir = os.path.join(data_dir, "maestro-v3.0.0")
     csv_file = os.path.join(data_dir, "maestro-v3.0.0.csv")
+    zip_file = os.path.join(data_dir, "maestro-v3.0.0.zip")
+
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir)
+
+    if not os.path.exists(csv_file):
+        download_file(maestro_csv, csv_file)
+
+    if not os.path.exists(src_dir):
+        download_file(maestro_zip, zip_file)
+        with zipfile.ZipFile(zip_file, "r") as zip_ref:
+            zip_ref.extractall(data_dir)
+
     df: pd.DataFrame = pd.read_csv(csv_file)
-    midi_encoder = PerformanceEncoder(32, 96)
     for split in ["train", "test", "validation"]:
         os.makedirs(os.path.join(data_dir, split), exist_ok=True)
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
@@ -150,14 +166,18 @@ def convert_maestro_to_proto(data_dir: str, max_workers: int = 10):
             res.extend(future.result())
 
 
-maestro_zip = "https://storage.googleapis.com/magentadata/datasets/maestro/v3.0.0/maestro-v3.0.0-midi.zip"
 
 def download_file(url: str, fname: str):
     response = requests.get(url, stream=True)
 
     total_size_in_bytes = int(response.headers.get('content-length', 0))
     block_size = 1024
-    progress_bar = tqdm(total=total_size_in_bytes, unit='iB', unit_scale=True)
+    progress_bar = tqdm(
+        total=total_size_in_bytes, 
+        unit='iB', 
+        unit_scale=True, 
+        desc='Downloading ' + fname
+    )
 
     with open(fname, 'wb') as file:
         for data in response.iter_content(block_size):
