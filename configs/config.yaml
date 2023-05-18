@@ -44,6 +44,6 @@ test_after_training: True
 
 num_velocity_bins: 32
 steps_per_second: 96
-max_seq: 4096
+max_seq: 2048
 
 ckpt: None
