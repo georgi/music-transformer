@@ -151,6 +151,7 @@ def convert_maestro_to_proto(data_dir: str,
     df: pd.DataFrame = pd.read_csv(csv_file)
     for split in ["train", "test", "validation"]:
         os.makedirs(os.path.join(data_dir, split), exist_ok=True)
+        
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         res = []
         futures = [
