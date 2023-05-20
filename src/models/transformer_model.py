@@ -9,40 +9,40 @@ from transformers import (
     GPTNeoXConfig,
     GPTNeoXForCausalLM,
 )
-from .performance_encoder import PerformanceEncoder
 from torch.optim import Adam
 from torch.optim.lr_scheduler import CyclicLR
 
 
 class TransformerModel(LightningModule):
     """
-    This is a PyTorch Lightning module that defines a model using the Transformer architecture. 
+    This is a PyTorch Lightning module that defines a model using the Transformer architecture.
     The specific variant of the Transformer (GPT-2, GPTNeo, or TransfoXL) can be specified during
     the model's initialization.
 
-    1. The `TransformerModel` class extends the `LightningModule`, which is PyTorch Lightning's 
-      base module class. It contains the logic for a full training/evaluation loop. The class contains 
-      a transformer model from the Hugging Face's `transformers` library, which can be one of three 
+    1. The `TransformerModel` class extends the `LightningModule`, which is PyTorch Lightning's
+      base module class. It contains the logic for a full training/evaluation loop. The class contains
+      a transformer model from the Hugging Face's `transformers` library, which can be one of three
       types: `TransfoXLLMHeadModel`, `GPT2LMHeadModel`, or `GPTNeoForCausalLM`.
 
-    2. The `__init__` method initializes the model. It takes a number of hyperparameters, including 
-      the learning rate, beta values for the Adam optimizer, epsilon value for numerical stability in Adam, 
-      weight decay for L2 regularization, the number of velocity bins and steps per second for the 
-      Performance Encoder, and transformer model-specific hyperparameters like the number of positions, 
+    2. The `__init__` method initializes the model. It takes a number of hyperparameters, including
+      the learning rate, beta values for the Adam optimizer, epsilon value for numerical stability in Adam,
+      weight decay for L2 regularization, the number of velocity bins and steps per second for the
+      Performance Encoder, and transformer model-specific hyperparameters like the number of positions,
       layers, heads, and embeddings, attention types, and dropout rates. The architecture type is also specified here.
 
-    3. The `forward` method defines the forward pass of the model. It takes an input tensor `x`, 
+    3. The `forward` method defines the forward pass of the model. It takes an input tensor `x`,
       passes it through the transformer model, and calculates the loss. The calculation of the loss differs
       depending on the transformer architecture used.
 
     4. The `training_step` and `validation_step` methods define what happens during one training or
       validation step, respectively. They both calculate and return the loss, and log it for progress tracking.
 
-    5. The `configure_optimizers` method sets up the optimizer and learning rate scheduler to be used 
-      during training. It uses the Adam optimizer with parameters defined during initialization and 
+    5. The `configure_optimizers` method sets up the optimizer and learning rate scheduler to be used
+      during training. It uses the Adam optimizer with parameters defined during initialization and
       a cyclic learning rate scheduler.
 
     """
+
     transformer: Union[TransfoXLLMHeadModel, GPT2LMHeadModel, GPTNeoXForCausalLM]
 
     def __init__(
@@ -51,8 +51,6 @@ class TransformerModel(LightningModule):
         betas: Tuple[float, float],
         eps: float,
         weight_decay: float,
-        num_velocity_bins: int,
-        steps_per_second: int,
         n_positions: int,
         n_layer: int,
         n_head: int,
@@ -63,6 +61,7 @@ class TransformerModel(LightningModule):
         super().__init__()
 
         self.lr = lr
+        self.vocab_size = 500
 
         self.save_hyperparameters(
             {
@@ -70,8 +69,6 @@ class TransformerModel(LightningModule):
                 "betas": betas,
                 "eps": eps,
                 "weight_decay": weight_decay,
-                "num_velocity_bins": num_velocity_bins,
-                "steps_per_second": steps_per_second,
                 "n_layer": n_layer,
                 "n_head": n_head,
                 "n_positions": n_positions,
@@ -80,13 +77,9 @@ class TransformerModel(LightningModule):
             }
         )
 
-        self.encoder = PerformanceEncoder(
-            num_velocity_bins=num_velocity_bins, steps_per_second=steps_per_second
-        )
-
         if architecture == "transfoxl":
             configuration = TransfoXLConfig(
-                vocab_size=self.encoder.vocab_size,
+                vocab_size=self.vocab_size,
                 n_layer=n_layer,
                 n_head=n_head,
                 mem_len=200,
@@ -97,7 +90,7 @@ class TransformerModel(LightningModule):
             self.transformer = TransfoXLLMHeadModel(configuration)
         elif architecture == "gpt2":
             configuration = GPT2Config(
-                vocab_size=self.encoder.vocab_size,
+                vocab_size=self.vocab_size,
                 n_positions=n_positions,
                 n_ctx=n_positions,
                 n_embd=n_embed,
@@ -107,7 +100,7 @@ class TransformerModel(LightningModule):
             self.transformer = GPT2LMHeadModel(configuration)
         elif architecture == "gptneo":
             configuration = GPTNeoXConfig(
-                vocab_size=self.encoder.vocab_size,
+                vocab_size=self.vocab_size,
                 max_position_embeddings=n_positions,
                 num_hidden_layers=n_layer,
                 hidden_size=n_embed,

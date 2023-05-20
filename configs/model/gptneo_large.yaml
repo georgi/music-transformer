@@ -1,14 +1,12 @@
 _target_: src.models.transformer_model.TransformerModel
 
 architecture: gptneo
-lr: 0.0002
+lr: 0.0001
 betas: [0.9, 0.95]
 eps: 1e-8
-weight_decay: 0.1
-num_velocity_bins: ${num_velocity_bins}
-steps_per_second: ${steps_per_second}
+weight_decay: 0.15
 n_positions: ${max_seq}
-n_embed: 1024
-n_head: 64
-n_layer: 32
+n_embed: 512
+n_head: 8
+n_layer: 8
 gradient_checkpointing: True

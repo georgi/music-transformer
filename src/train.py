@@ -39,11 +39,9 @@ def train(config: DictConfig) -> Optional[float]:
 
     # Init lightning model
     log.info(f"Instantiating model <{config.model._target_}>")
-    if config.ckpt:
+    if config.ckpt != "":
         log.info(f"Loading weights from <{config.ckpt}>")
-        model: LightningModule = TransformerModel.load_from_checkpoint(
-            config.ckpt
-        )
+        model: LightningModule = TransformerModel.load_from_checkpoint(config.ckpt)
     else:
         model: LightningModule = hydra.utils.instantiate(config.model)
 

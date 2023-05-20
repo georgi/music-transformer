@@ -1,9 +1,9 @@
-from src.data import convert_maestro_to_proto
 import dotenv
 import hydra
 import os
 from omegaconf import DictConfig
-from src.data import PerformanceEncoder
+from miditok import MIDITokenizer, Structured
+from src.data import convert_maestro_to_tokens
 
 """
 This scripts downloads the MAESTRO dataset and converts it to the proto format.
@@ -19,9 +19,10 @@ dotenv.load_dotenv(override=True)
 
 @hydra.main(config_path="configs/", config_name="config.yaml")
 def main(config: DictConfig):
-    encoder = PerformanceEncoder.from_config(config)
-    convert_maestro_to_proto(data_dir, encoder)
+    tokenizer = Structured()
+    tokenizer.load_params(data_dir + "/tokenizer_params.json")
+    convert_maestro_to_tokens(tokenizer, data_dir)
+
 
 if __name__ == "__main__":
     main()
-
