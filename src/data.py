@@ -30,6 +30,31 @@ def convert_midi_to_tokens(tokenizer: MIDITokenizer, midi_file: str, token_file:
     tokenizer.save_tokens(seq, token_file, get_midi_programs(midi))
 
 
+class MidiConverter:
+    """
+    A class to convert MIDI files to tokenized MIDI files.
+    """
+
+    def __init__(self, tokenizer: MIDITokenizer, src_dir: str, data_dir: str):
+        """
+        Args:
+            tokenizer: The MIDI tokenizer to use.
+            src_dir: The directory containing the MIDI files.
+            data_dir: The directory to save the tokenized MIDI files to.
+        """
+        self.tokenizer = tokenizer
+        self.src_dir = src_dir
+        self.data_dir = data_dir
+
+    def __call__(self, row: tuple[str, str]):
+        split, midi_filename = row
+        convert_midi_to_tokens(
+            self.tokenizer,
+            os.path.join(self.src_dir, midi_filename),
+            os.path.join(self.data_dir, split, os.path.basename(midi_filename)),
+        )
+
+
 def convert_maestro_to_tokens(
     tokenizer: MIDITokenizer, data_dir: str, max_workers: int = 10
 ):
@@ -60,12 +85,13 @@ def convert_maestro_to_tokens(
     for split in ["train", "test", "validation"]:
         os.makedirs(os.path.join(data_dir, split), exist_ok=True)
 
-    for row in tqdm(df.itertuples(), total=len(df)):
-        convert_midi_to_tokens(
-            tokenizer,
-            os.path.join(src_dir, row.midi_filename),  # type: ignore
-            os.path.join(data_dir, row.split, os.path.basename(row.midi_filename)),  # type: ignore
-            )
+    midi_converter = MidiConverter(tokenizer, src_dir, data_dir)
+
+    rows = [(row.split, row.midi_filename) for row in df.itertuples()]
+
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        for _ in tqdm(executor.map(midi_converter, rows), total=len(rows)):
+            pass
 
 
 def download_file(url: str, fname: str):

@@ -1,10 +1,10 @@
 _target_: src.models.transformer_model.TransformerModel
 
 architecture: gptneo
-lr: 0.0001
-betas: [0.9, 0.98]
-eps: 1e-6
-weight_decay: 0.15
+lr: 5e-5
+warmup_steps: 1000
+betas: [0.9, 0.999]
+weight_decay: 0.01
 n_positions: ${max_seq}
 n_embed: 512
 n_head: 8

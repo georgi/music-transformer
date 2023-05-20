@@ -49,6 +49,9 @@ class SequenceDataset(IterableDataset):
             tokens = json.load(f)
             return tokens["ids"][0]
 
+    def __len__(self):
+        return len(self.sequence_files)
+
     def __iter__(self):
         worker_info = torch.utils.data.get_worker_info()
         if worker_info is None:  # single-process data loading, return the full iterator
@@ -72,4 +75,3 @@ class SequenceDataset(IterableDataset):
                     iter_count += 1
                     if self.max_iter != -1 and iter_count >= self.max_iter:
                         return
-

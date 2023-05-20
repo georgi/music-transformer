@@ -9,8 +9,7 @@ from transformers import (
     GPTNeoXConfig,
     GPTNeoXForCausalLM,
 )
-from torch.optim import Adam
-from torch.optim.lr_scheduler import CyclicLR
+from transformers import AdamW, get_cosine_with_hard_restarts_schedule_with_warmup
 
 
 class TransformerModel(LightningModule):
@@ -44,13 +43,14 @@ class TransformerModel(LightningModule):
     """
 
     transformer: Union[TransfoXLLMHeadModel, GPT2LMHeadModel, GPTNeoXForCausalLM]
+    total_steps: int = 0
 
     def __init__(
         self,
         lr: float,
         betas: Tuple[float, float],
-        eps: float,
         weight_decay: float,
+        warmup_steps: int,
         n_positions: int,
         n_layer: int,
         n_head: int,
@@ -67,8 +67,8 @@ class TransformerModel(LightningModule):
             {
                 "lr": lr,
                 "betas": betas,
-                "eps": eps,
                 "weight_decay": weight_decay,
+                "warmup_steps": warmup_steps,
                 "n_layer": n_layer,
                 "n_head": n_head,
                 "n_positions": n_positions,
@@ -131,24 +131,43 @@ class TransformerModel(LightningModule):
         return loss
 
     def configure_optimizers(self):
-        optimizer = Adam(
-            self.parameters(),
+        no_decay = ["bias", "LayerNorm.weight"]
+        optimizer_grouped_parameters = [
+            {
+                "params": [
+                    p
+                    for n, p in self.named_parameters()
+                    if not any(nd in n for nd in no_decay)
+                ],
+                "weight_decay": self.hparams["weight_decay"],
+            },
+            {
+                "params": [
+                    p
+                    for n, p in self.named_parameters()
+                    if any(nd in n for nd in no_decay)
+                ],
+                "weight_decay": 0.0,
+            },
+        ]
+
+        optimizer = AdamW(
+            optimizer_grouped_parameters,
             lr=self.hparams["lr"],
-            # betas=self.hparams['betas'],
-            # weight_decay=self.hparams['weight_decay']
+            betas=self.hparams["betas"],
         )
-        scheduler = {
-            "scheduler": CyclicLR(
-                optimizer=optimizer,
-                # mode="exp_range",
-                step_size_up=25000,
-                step_size_down=100000,
-                base_lr=self.hparams["lr"] / 100,
-                max_lr=self.hparams["lr"],
-                cycle_momentum=False,
-            ),
+
+        scheduler = get_cosine_with_hard_restarts_schedule_with_warmup(
+            optimizer=optimizer,
+            num_warmup_steps=self.hparams["warmup_steps"],
+            num_training_steps=self.total_steps,
+        )
+
+        lr_scheduler = {
+            "scheduler": scheduler,
             "name": "learning_rate",
             "interval": "step",
             "frequency": 1,
         }
-        return [optimizer], [scheduler]
+
+        return [optimizer], [lr_scheduler]

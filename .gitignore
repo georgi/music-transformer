@@ -145,3 +145,5 @@ logs/
 wandb/
 .env
 .autoenv
+
+.ipynb_checkpoints

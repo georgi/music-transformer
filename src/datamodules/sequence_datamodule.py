@@ -73,15 +73,15 @@ class SequenceDataModule(LightningDataModule):
         self.num_workers = num_workers
         self.pin_memory = pin_memory
         self.max_seq = max_seq
+        self.train_data, self.val_data, self.test_data = load_datasets(
+            data_dir=self.data_dir,
+            max_seq=self.max_seq,
+        )
 
     def prepare_data(self):
         pass
 
     def setup(self, stage: Optional[str] = None):
-        self.train_data, self.val_data, self.test_data = load_datasets(
-            data_dir=self.data_dir,
-            max_seq=self.max_seq,
-        )
         self.val_data.max_iter = 500
 
     def train_dataloader(self):

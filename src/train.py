@@ -78,6 +78,8 @@ def train(config: DictConfig) -> Optional[float]:
         logger=logger,
     )
 
+    model.total_steps = trainer.max_epochs * len(datamodule.train_dataloader())
+
     # Train the model
     log.info("Starting training!")
     trainer.fit(model=model, datamodule=datamodule)
