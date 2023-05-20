@@ -141,7 +141,8 @@ class TransformerModel(LightningModule):
             "scheduler": CyclicLR(
                 optimizer=optimizer,
                 # mode="exp_range",
-                step_size_up=100000,
+                step_size_up=25000,
+                step_size_down=100000,
                 base_lr=self.hparams["lr"] / 100,
                 max_lr=self.hparams["lr"],
                 cycle_momentum=False,

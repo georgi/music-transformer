@@ -1,0 +1,9 @@
+model_checkpoint:
+  dirpath: logs/checkpoints
+  filename: "epoch_{epoch:03d}"
+  monitor: "val/acc"
+  mode: "max"
+  save_last: True
+  save_top_k: 2
+  every_n_train_steps: 10000
+  auto_insert_metric_name: False
