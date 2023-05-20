@@ -60,19 +60,12 @@ def convert_maestro_to_tokens(
     for split in ["train", "test", "validation"]:
         os.makedirs(os.path.join(data_dir, split), exist_ok=True)
 
-    with ProcessPoolExecutor(max_workers=max_workers) as executor:
-        res = []
-        futures = [
-            executor.submit(
-                convert_midi_to_tokens,
-                tokenizer,
-                os.path.join(src_dir, row.midi_filename),  # type: ignore
-                os.path.join(data_dir, row.split),  # type: ignore
-            )  # type: ignore
-            for row in df.itertuples()
-        ]
-        for future in tqdm(futures):
-            res.extend(future.result())
+    for row in tqdm(df.itertuples(), total=len(df)):
+        convert_midi_to_tokens(
+            tokenizer,
+            os.path.join(src_dir, row.midi_filename),  # type: ignore
+            os.path.join(data_dir, row.split, os.path.basename(row.midi_filename)),  # type: ignore
+            )
 
 
 def download_file(url: str, fname: str):

@@ -5,8 +5,6 @@ import json
 import random
 from typing import List
 from torch.utils.data.dataset import IterableDataset
-from note_seq.protobuf.music_pb2 import NoteSequence
-from ...models.performance_encoder import PerformanceEncoder
 
 
 class SequenceDataset(IterableDataset):
@@ -74,3 +72,4 @@ class SequenceDataset(IterableDataset):
                     iter_count += 1
                     if self.max_iter != -1 and iter_count >= self.max_iter:
                         return
+
