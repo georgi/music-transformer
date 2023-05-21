@@ -1,38 +1,30 @@
-from dataclasses import dataclass
 import os
+import random
 import pandas as pd
 from concurrent.futures import ProcessPoolExecutor
 import requests
 from tqdm import tqdm
 import zipfile
-from miditok import MIDITokenizer
+from miditok import MIDITokenizer, REMI, Structured, TokSequence
 from miditok.utils import get_midi_programs
 from tqdm import tqdm
 from miditoolkit import MidiFile
+from miditok.data_augmentation import data_augmentation_midi
 
 
 maestro_zip = "https://storage.googleapis.com/magentadata/datasets/maestro/v3.0.0/maestro-v3.0.0-midi.zip"
 maestro_csv = "https://storage.googleapis.com/magentadata/datasets/maestro/v3.0.0/maestro-v3.0.0.csv"
 
 
-def convert_midi_to_tokens(tokenizer: MIDITokenizer, midi_file: str, token_file: str):
-    """
-    Convert a MIDI file to a tokenized MIDI file.
-
-    Args:
-        tokenizer: The MIDI tokenizer to use.
-        midi_file: The path to the MIDI file.
-        token_file: The path to save the tokenized MIDI file to.
-    """
-    midi = MidiFile(midi_file)
-    seq = tokenizer(midi)
-    tokenizer.apply_bpe(seq)
-    tokenizer.save_tokens(seq, token_file, get_midi_programs(midi))
-
-
 class MidiConverter:
     """
     A class to convert MIDI files to tokenized MIDI files.
+
+    It does following steps:
+        1. Read the MIDI file.
+        2. Augment the MIDI file.
+        3. Tokenize the MIDI file.
+        4. Save the tokenized MIDI file.
     """
 
     def __init__(self, tokenizer: MIDITokenizer, src_dir: str, data_dir: str):
@@ -46,26 +38,99 @@ class MidiConverter:
         self.src_dir = src_dir
         self.data_dir = data_dir
 
+    def read_midi(self, midi_file: str) -> MidiFile:
+        """
+        Read a MIDI file.
+        """
+        return MidiFile(os.path.join(self.src_dir, midi_file))
+
+    def tokenize_midi(self, midi: MidiFile) -> TokSequence:
+        return self.tokenizer(midi)
+
+    def augment_midi(self, midi: MidiFile) -> list[tuple[str, MidiFile]]:
+        """
+        Augment a MIDI file. Returns a list of tuples containing the name of the augmentation and the
+        augmented MIDI file.
+
+        Args:
+            midi: The MIDI file to augment.
+        """
+        augmentations = data_augmentation_midi(
+            midi=midi,
+            tokenizer=self.tokenizer,
+            pitch_offsets=random.sample(range(-10, 11), 3),
+            velocity_offsets=random.sample(range(-10, 11), 3),
+            all_offset_combinations=True,
+        )
+        return [("_".join(map(str, aug)), midi) for aug, midi in augmentations]
+
+    def save_tokens(
+        self, seq: TokSequence, token_file: str, programs: list[tuple[int, bool]]
+    ):
+        """
+        Save a tokenized MIDI file.
+
+        Args:
+            seq: The tokenized MIDI file.
+            token_file: The path to save the tokenized MIDI file to.
+            programs: The programs used in the MIDI file.
+        """
+        self.tokenizer.save_tokens(seq, token_file, programs)
+
     def __call__(self, row: tuple[str, str]):
         split, midi_filename = row
-        convert_midi_to_tokens(
-            self.tokenizer,
-            os.path.join(self.src_dir, midi_filename),
-            os.path.join(self.data_dir, split, os.path.basename(midi_filename)),
-        )
+        midi_file = os.path.join(self.src_dir, midi_filename)
+        midi_basename = os.path.splitext(os.path.basename(midi_filename))[0]
+        midi = self.read_midi(midi_file)
+        programs = get_midi_programs(midi)
+        if split == "train":
+            for aug, augmented_midi in self.augment_midi(midi):
+                seq = self.tokenize_midi(augmented_midi)
+                out_file = os.path.join(
+                    self.data_dir, split, midi_basename + "_" + aug + ".json"
+                )
+                self.save_tokens(seq, out_file, programs)
+        else:
+            seq = self.tokenize_midi(midi)
+            out_file = os.path.join(self.data_dir, split, midi_basename + ".json")
+            self.save_tokens(seq, out_file, programs)
 
 
-def convert_maestro_to_tokens(
-    tokenizer: MIDITokenizer, data_dir: str, max_workers: int = 10
-):
+def convert_snes_to_tokens(src_dir: str, data_dir: str, max_workers: int = 10):
+    """
+    Convert the SNES dataset to tokenized MIDI files.
+
+    Args:
+        data_dir: The directory to save the dataset to.
+        max_workers: The number of workers to use for the conversion.
+    """
+    tokenizer = REMI()
+
+    midi_converter = MidiConverter(tokenizer, src_dir, data_dir)
+
+    rows = []
+    for split in ["train", "test", "validation"]:
+        split_dir = os.path.join(src_dir, split)
+        os.makedirs(os.path.join(data_dir, split), exist_ok=True)
+        for midi_file in os.listdir(split_dir):
+            rows.append((split, os.path.join(split, midi_file)))
+
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        for _ in tqdm(executor.map(midi_converter, rows), total=len(rows)):
+            pass
+
+
+def convert_maestro_to_tokens(data_dir: str, max_workers: int = 10):
     """
     Convert the MAESTRO dataset to tokenized MIDI files.
 
     Args:
-        tokenizer: The MIDI tokenizer to use.
         data_dir: The directory to save the dataset to.
         max_workers: The number of workers to use for the conversion.
     """
+    tokenizer = Structured()
+    tokenizer.load_params("tokenizer_params.json")
+
     src_dir = os.path.join(data_dir, "maestro-v3.0.0")
     csv_file = os.path.join(data_dir, "maestro-v3.0.0.csv")
     zip_file = os.path.join(data_dir, "maestro-v3.0.0.zip")

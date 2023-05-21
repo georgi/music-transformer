@@ -2,11 +2,11 @@ _target_: src.models.transformer_model.TransformerModel
 
 architecture: gptneo
 lr: 5e-5
-warmup_steps: 1000
+warmup_steps: 50
 betas: [0.9, 0.999]
 weight_decay: 0.01
 n_positions: ${max_seq}
 n_embed: 512
 n_head: 8
 n_layer: 8
-gradient_checkpointing: True
+gradient_checkpointing: False

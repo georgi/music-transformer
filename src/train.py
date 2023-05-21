@@ -41,7 +41,9 @@ def train(config: DictConfig) -> Optional[float]:
     log.info(f"Instantiating model <{config.model._target_}>")
     if config.ckpt != "":
         log.info(f"Loading weights from <{config.ckpt}>")
-        model: LightningModule = TransformerModel.load_from_checkpoint(config.ckpt)
+        model: LightningModule = TransformerModel.load_from_checkpoint(
+            config.ckpt, map_location=torch.device("cuda")
+        )
     else:
         model: LightningModule = hydra.utils.instantiate(config.model)
 
@@ -78,7 +80,7 @@ def train(config: DictConfig) -> Optional[float]:
         logger=logger,
     )
 
-    model.total_steps = trainer.max_epochs * len(datamodule.train_dataloader())
+    model.total_steps = config.trainer.max_epochs * len(datamodule.train_dataloader())
 
     # Train the model
     log.info("Starting training!")

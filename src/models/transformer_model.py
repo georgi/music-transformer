@@ -55,13 +55,13 @@ class TransformerModel(LightningModule):
         n_layer: int,
         n_head: int,
         n_embed: int,
+        vocab_size: int,
         architecture: str = "gptneo",
         gradient_checkpointing: bool = False,
     ):
         super().__init__()
 
         self.lr = lr
-        self.vocab_size = 500
 
         self.save_hyperparameters(
             {
@@ -79,7 +79,7 @@ class TransformerModel(LightningModule):
 
         if architecture == "transfoxl":
             configuration = TransfoXLConfig(
-                vocab_size=self.vocab_size,
+                vocab_size=vocab_size,
                 n_layer=n_layer,
                 n_head=n_head,
                 mem_len=200,
@@ -90,7 +90,7 @@ class TransformerModel(LightningModule):
             self.transformer = TransfoXLLMHeadModel(configuration)
         elif architecture == "gpt2":
             configuration = GPT2Config(
-                vocab_size=self.vocab_size,
+                vocab_size=vocab_size,
                 n_positions=n_positions,
                 n_ctx=n_positions,
                 n_embd=n_embed,
@@ -100,7 +100,7 @@ class TransformerModel(LightningModule):
             self.transformer = GPT2LMHeadModel(configuration)
         elif architecture == "gptneo":
             configuration = GPTNeoXConfig(
-                vocab_size=self.vocab_size,
+                vocab_size=vocab_size,
                 max_position_embeddings=n_positions,
                 num_hidden_layers=n_layer,
                 hidden_size=n_embed,
@@ -128,6 +128,11 @@ class TransformerModel(LightningModule):
     def validation_step(self, batch: Any, _: int):
         loss = self.forward(batch)
         self.log("val/loss", loss, prog_bar=True)
+        return loss
+
+    def test_step(self, batch: Any, _: int):
+        loss = self.forward(batch)
+        self.log("test/loss", loss, prog_bar=True)
         return loss
 
     def configure_optimizers(self):
