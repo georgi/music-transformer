@@ -104,6 +104,7 @@ class TransformerModel(LightningModule):
                 max_position_embeddings=n_positions,
                 num_hidden_layers=n_layer,
                 hidden_size=n_embed,
+                intermediate_size=n_embed * 4,
                 num_attention_heads=n_head,
                 use_cache=not gradient_checkpointing,
                 gradient_checkpointing=gradient_checkpointing,
