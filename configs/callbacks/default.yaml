@@ -3,15 +3,18 @@ defaults:
   - early_stopping.yaml
   - model_summary.yaml
   - rich_progress_bar.yaml
+  - lr_monitor.yaml
   - _self_
 
 model_checkpoint:
-  dirpath: ${paths.output_dir}/checkpoints
+  dirpath: "s3://musicmodels/checkpoints/"
   filename: "epoch_{epoch:03d}"
   monitor: "val/loss"
   mode: "min"
   save_last: True
+  save_top_k: 3
   auto_insert_metric_name: False
+  every_n_train_steps: 1000
 
 early_stopping:
   monitor: "val/loss"

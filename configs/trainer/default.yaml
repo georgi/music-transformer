@@ -1,7 +1,5 @@
 _target_: lightning.Trainer
   
-default_root_dir: "s3://musicmodels/data"
-
 accelerator: gpu
 devices: 1
 
