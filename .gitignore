@@ -145,9 +145,6 @@ logs/
 wandb/
 .env
 .autoenv
-midi/
 *.ckpt
-*.midi
-*.mid
 
 .ipynb_checkpoints
