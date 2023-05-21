@@ -1,7 +1,15 @@
 model_checkpoint:
-  dirpath: logs/checkpoints
+  _target_: lightning.pytorch.callbacks.ModelCheckpoint
+  dirpath: ${paths.output_dir}/checkpoints
   filename: "epoch_{epoch:03d}"
   monitor: "val/loss"
   mode: "min"
   save_top_k: 2
   auto_insert_metric_name: False
+
+model_summary:
+  _target_: lightning.pytorch.callbacks.RichModelSummary
+  max_depth: 1 # the maximum depth of layer nesting that the summary will include
+    
+rich_progress_bar:
+  _target_: lightning.pytorch.callbacks.RichProgressBar
