@@ -1,6 +1,6 @@
 import os
 from typing import Optional, List
-from pytorch_lightning import LightningDataModule
+from lightning.pytorch import LightningDataModule
 from torch.utils.data import DataLoader
 from .datasets.sequence_dataset import SequenceDataset
 import logging

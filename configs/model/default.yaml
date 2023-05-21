@@ -1,11 +1,11 @@
 _target_: src.models.transformer_model.TransformerModel
 
-architecture: gptneo
-lr: 5e-5
-warmup_steps: 50
+architecture: transfoxl
+lr: 1e-4
+warmup_steps: 100
 betas: [0.9, 0.999]
 weight_decay: 0.01
-n_positions: ${max_seq
+n_positions: ${max_seq}
 vocab_size: ${vocab_size}
 n_embed: 512
 n_head: 8

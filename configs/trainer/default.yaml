@@ -1,12 +1,12 @@
-_target_: pytorch_lightning.Trainer
+_target_: lightning.Trainer
+  
+default_root_dir: "s3://musicmodels/data"
 
 accelerator: gpu
 devices: 1
 
 min_epochs: 1
 max_epochs: 50
-
-# plugins: "ddp_sharded"
 
 gradient_clip_val: 1.0
 gradient_clip_algorithm: "value"

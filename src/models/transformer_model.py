@@ -1,6 +1,6 @@
 from typing import Any, Union, Tuple, Optional
 import torch
-from pytorch_lightning import LightningModule
+from lightning.pytorch import LightningModule
 from transformers import (
     TransfoXLConfig,
     TransfoXLLMHeadModel,
@@ -55,7 +55,7 @@ class TransformerModel(LightningModule):
         n_layer: int,
         n_head: int,
         n_embed: int,
-        vocab_size: int,
+        vocab_size: int = 350,
         architecture: str = "gptneo",
         gradient_checkpointing: bool = False,
     ):

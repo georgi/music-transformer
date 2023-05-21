@@ -58,9 +58,9 @@ class MidiConverter:
         augmentations = data_augmentation_midi(
             midi=midi,
             tokenizer=self.tokenizer,
-            pitch_offsets=random.sample(range(-10, 11), 3),
-            velocity_offsets=random.sample(range(-10, 11), 3),
-            all_offset_combinations=True,
+            pitch_offsets=[-3, -2, -1, 0, 1, 2, 3],
+            velocity_offsets=[-10, -5, 0, 5, 10],
+            all_offset_combinations=False,
         )
         return [("_".join(map(str, aug)), midi) for aug, midi in augmentations]
 
@@ -128,18 +128,14 @@ def convert_maestro_to_tokens(data_dir: str, max_workers: int = 10):
         data_dir: The directory to save the dataset to.
         max_workers: The number of workers to use for the conversion.
     """
-    tokenizer = Structured()
-    tokenizer.load_params("tokenizer_params.json")
+    tokenizer = REMI()
 
     src_dir = os.path.join(data_dir, "maestro-v3.0.0")
-    csv_file = os.path.join(data_dir, "maestro-v3.0.0.csv")
+    csv_file = os.path.join(src_dir, "maestro-v3.0.0.csv")
     zip_file = os.path.join(data_dir, "maestro-v3.0.0.zip")
 
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
-
-    if not os.path.exists(csv_file):
-        download_file(maestro_csv, csv_file)
 
     if not os.path.exists(src_dir):
         download_file(maestro_zip, zip_file)

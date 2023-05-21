@@ -3,14 +3,14 @@ from typing import List, Optional
 import hydra
 import torch
 from omegaconf import DictConfig
-from pytorch_lightning import (
+from lightning.pytorch import (
     Callback,
     LightningDataModule,
     LightningModule,
     Trainer,
     seed_everything,
 )
-from pytorch_lightning.loggers.logger import Logger
+from lightning.pytorch.loggers.logger import Logger
 
 from .utils import utils
 from .models.transformer_model import TransformerModel
