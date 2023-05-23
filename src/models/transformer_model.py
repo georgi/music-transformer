@@ -55,7 +55,7 @@ class TransformerModel(LightningModule):
         n_layer: int,
         n_head: int,
         n_embed: int,
-        vocab_size: int = 350,
+        vocab_size: int,
         architecture: str = "gptneo",
         gradient_checkpointing: bool = False,
     ):

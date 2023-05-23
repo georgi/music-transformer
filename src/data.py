@@ -128,7 +128,7 @@ def convert_maestro_to_tokens(data_dir: str, max_workers: int = 10):
         data_dir: The directory to save the dataset to.
         max_workers: The number of workers to use for the conversion.
     """
-    tokenizer = REMI()
+    tokenizer = Structured()
 
     src_dir = os.path.join(data_dir, "maestro-v3.0.0")
     csv_file = os.path.join(src_dir, "maestro-v3.0.0.csv")
