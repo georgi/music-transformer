@@ -1,3 +1,4 @@
+from copy import deepcopy
 import os
 import random
 import pandas as pd
@@ -47,6 +48,21 @@ class MidiConverter:
     def tokenize_midi(self, midi: MidiFile) -> TokSequence:
         return self.tokenizer(midi)
 
+    def timestretch_midi(self, midi: MidiFile, scale: float) -> MidiFile:
+        """
+        Timestretch a MIDI file.
+
+        Args:
+            midi: The MIDI file to timestretch.
+            scale: The timestretch scale.
+        """
+        midi = deepcopy(midi)
+        for track in midi.instruments:
+            for note in track.notes:
+                note.start = int(note.start * scale)
+                note.end = int(note.end * scale)
+        return midi
+
     def augment_midi(self, midi: MidiFile) -> list[tuple[str, MidiFile]]:
         """
         Augment a MIDI file. Returns a list of tuples containing the name of the augmentation and the
@@ -59,10 +75,15 @@ class MidiConverter:
             midi=midi,
             tokenizer=self.tokenizer,
             pitch_offsets=[-3, -2, -1, 0, 1, 2, 3],
-            velocity_offsets=[-10, -5, 0, 5, 10],
+            velocity_offsets=[-5, 0, 5],
             all_offset_combinations=False,
         )
-        return [("_".join(map(str, aug)), midi) for aug, midi in augmentations]
+        time_stretched = [
+            (f"time_{stretch}", self.timestretch_midi(midi, stretch))
+            for stretch in [0.95, 1.05, 0.9, 0.8]
+        ]
+        files = [("_".join(map(str, aug)), midi) for aug, midi in augmentations]
+        return files + time_stretched
 
     def save_tokens(
         self, seq: TokSequence, token_file: str, programs: list[tuple[int, bool]]

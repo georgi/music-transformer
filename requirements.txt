@@ -42,3 +42,4 @@ pudb            # debugger
 pyfluidsynth
 miditok
 transformers
+s3fs

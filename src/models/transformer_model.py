@@ -55,7 +55,7 @@ class TransformerModel(LightningModule):
         n_layer: int,
         n_head: int,
         n_embed: int,
-        vocab_size: int,
+        vocab_size: int = 253,
         architecture: str = "gptneo",
         gradient_checkpointing: bool = False,
     ):
@@ -67,6 +67,7 @@ class TransformerModel(LightningModule):
             {
                 "lr": lr,
                 "betas": betas,
+                "vocab_size": vocab_size,
                 "weight_decay": weight_decay,
                 "warmup_steps": warmup_steps,
                 "n_layer": n_layer,
