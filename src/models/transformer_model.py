@@ -55,7 +55,7 @@ class TransformerModel(LightningModule):
         n_layer: int,
         n_head: int,
         n_embed: int,
-        vocab_size: int = 253,
+        vocab_size: int,
         architecture: str = "gptneo",
         gradient_checkpointing: bool = False,
     ):
@@ -106,11 +106,11 @@ class TransformerModel(LightningModule):
         elif architecture == "gptneo":
             configuration = GPTNeoXConfig(
                 vocab_size=vocab_size,
-                max_position_embeddings=n_positions,
-                num_hidden_layers=n_layer,
                 hidden_size=n_embed,
-                intermediate_size=n_embed * 4,
+                num_hidden_layers=n_layer,
                 num_attention_heads=n_head,
+                intermediate_size=n_embed * 4,
+                max_position_embeddings=n_positions,
                 use_cache=not gradient_checkpointing,
                 gradient_checkpointing=gradient_checkpointing,
             )

@@ -44,6 +44,6 @@ ignore_warnings: True
 test_after_training: True
 
 max_seq: 2048
-vocab_size: 253
+vocab_size: 509
 
 ckpt: ""

@@ -46,7 +46,7 @@ class MidiConverter:
         return MidiFile(os.path.join(self.src_dir, midi_file))
 
     def tokenize_midi(self, midi: MidiFile) -> TokSequence:
-        return self.tokenizer(midi)
+        return self.tokenizer.midi_to_tokens(midi)[0]
 
     def timestretch_midi(self, midi: MidiFile, scale: float) -> MidiFile:
         """
@@ -80,7 +80,7 @@ class MidiConverter:
         )
         time_stretched = [
             (f"time_{stretch}", self.timestretch_midi(midi, stretch))
-            for stretch in [0.95, 1.05, 0.9, 0.8]
+            for stretch in [0.95, 1.05, 0.975, 1.025, 0.9, 0.8]
         ]
         files = [("_".join(map(str, aug)), midi) for aug, midi in augmentations]
         return files + time_stretched
@@ -149,7 +149,7 @@ def convert_maestro_to_tokens(data_dir: str, max_workers: int = 10):
         data_dir: The directory to save the dataset to.
         max_workers: The number of workers to use for the conversion.
     """
-    tokenizer = Structured()
+    tokenizer = Structured(beat_res={(0, 4): 32, (4, 12): 8})
 
     src_dir = os.path.join(data_dir, "maestro-v3.0.0")
     csv_file = os.path.join(src_dir, "maestro-v3.0.0.csv")

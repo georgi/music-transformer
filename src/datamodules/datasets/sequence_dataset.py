@@ -47,7 +47,7 @@ class SequenceDataset(IterableDataset):
     def load_seq(self, file_path: str) -> List[int]:
         with open(file_path) as f:
             tokens = json.load(f)
-            return tokens["ids"][0]
+            return tokens["ids"]
 
     def __len__(self):
         return len(self.sequence_files)
