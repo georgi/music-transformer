@@ -43,3 +43,4 @@ pyfluidsynth
 miditok
 transformers
 s3fs
+miditoolkit

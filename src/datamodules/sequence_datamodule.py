@@ -1,41 +1,14 @@
 import os
+from pathlib import Path
 from typing import Optional, List
 from lightning.pytorch import LightningDataModule
+from miditok import MIDITokenizer
 from torch.utils.data import DataLoader
 from .datasets.sequence_dataset import SequenceDataset
+from miditok.pytorch_data import DatasetMIDI, DataCollator
 import logging
 
 logger = logging.getLogger(__name__)
-
-
-def load_datasets(
-    data_dir: str,
-    max_seq: int,
-):
-    """
-    The load_datasets function loads MIDI sequence datasets from a specified
-    directory for each data split (training, validation, and testing).
-
-    Args:
-        data_dir: The directory containing the tokenized MIDI sequence files.
-        max_seq: The maximum sequence length.
-    """
-    datasets = []
-    for split in ["train", "validation", "test"]:
-        split_dir = os.path.join(data_dir, split)
-        sequence_files: List[str] = [
-            os.path.join(split_dir, f) for f in os.listdir(split_dir)
-        ]
-
-        logger.info(f"Found {len(sequence_files)} sequence files in {split_dir}")
-
-        ds = SequenceDataset(
-            sequence_files=sequence_files,
-            seq_length=max_seq,
-        )
-        datasets.append(ds)
-
-    return datasets
 
 
 class SequenceDataModule(LightningDataModule):
@@ -49,14 +22,12 @@ class SequenceDataModule(LightningDataModule):
     used in a PyTorch Lightning training loop.
     """
 
-    data_dir: str
+    data_dir: Path
     max_seq: int
     batch_size: int
     num_workers: int
     pin_memory: bool
-    train_data: SequenceDataset
-    val_data: SequenceDataset
-    test_data: SequenceDataset
+    tokenizer: MIDITokenizer
 
     def __init__(
         self,
@@ -68,42 +39,47 @@ class SequenceDataModule(LightningDataModule):
     ):
         super().__init__()
 
-        self.data_dir = data_dir
+        self.data_dir = Path(data_dir)
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.pin_memory = pin_memory
         self.max_seq = max_seq
-        self.train_data, self.val_data, self.test_data = load_datasets(
-            data_dir=self.data_dir,
-            max_seq=self.max_seq,
+        self.tokenizer = MIDITokenizer.from_pretrained(
+            "mgeorgi/music-transformer",
+            private=True,
+        )
+
+    def get_dataloader(self, split: str) -> DataLoader:
+        """
+        Returns a DataLoader instance for the given dataset split.
+        """
+        data_dir = self.data_dir / split
+        dataset = DatasetMIDI(
+            files_paths=list(data_dir.glob("**/*.mid")),
+            tokenizer=self.tokenizer,
+            max_seq_len=self.max_seq,
+            bos_token_id=self.tokenizer["BOS_None"],  # type: ignore
+            eos_token_id=self.tokenizer["EOS_None"],  # type: ignore
+        )
+        return DataLoader(
+            dataset,
+            batch_size=self.batch_size,
+            pin_memory=self.pin_memory,
+            num_workers=self.num_workers,
+            collate_fn=DataCollator(self.tokenizer["PAD_None"]),  # type: ignore
         )
 
     def prepare_data(self):
         pass
 
     def setup(self, stage: Optional[str] = None):
-        self.val_data.max_iter = 500
+        pass
 
     def train_dataloader(self):
-        return DataLoader(
-            dataset=self.train_data,
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-            pin_memory=self.pin_memory,
-        )
+        return self.get_dataloader("train")
 
     def val_dataloader(self):
-        return DataLoader(
-            dataset=self.val_data,
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-            pin_memory=self.pin_memory,
-        )
+        return self.get_dataloader("validation")
 
     def test_dataloader(self):
-        return DataLoader(
-            dataset=self.test_data,
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-            pin_memory=self.pin_memory,
-        )
+        return self.get_dataloader("test")

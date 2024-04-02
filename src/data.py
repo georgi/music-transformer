@@ -1,16 +1,17 @@
 from copy import deepcopy
 import os
+from pathlib import Path
 import random
 import pandas as pd
 from concurrent.futures import ProcessPoolExecutor
 import requests
 from tqdm import tqdm
 import zipfile
-from miditok import MIDITokenizer, REMI, Structured, TokSequence
+from miditok import MIDITokenizer, REMI, Structured, TokSequence, TokenizerConfig
 from miditok.utils import get_midi_programs
 from tqdm import tqdm
 from miditoolkit import MidiFile
-from miditok.data_augmentation import data_augmentation_midi
+from miditok.data_augmentation import augment_midi
 
 
 maestro_zip = "https://storage.googleapis.com/magentadata/datasets/maestro/v3.0.0/maestro-v3.0.0-midi.zip"
@@ -46,7 +47,11 @@ class MidiConverter:
         return MidiFile(os.path.join(self.src_dir, midi_file))
 
     def tokenize_midi(self, midi: MidiFile) -> TokSequence:
-        return self.tokenizer.midi_to_tokens(midi)[0]
+        res = self.tokenizer.midi_to_tokens(midi)
+        if isinstance(res, TokSequence):
+            return res
+        else:
+            return res[0]
 
     def timestretch_midi(self, midi: MidiFile, scale: float) -> MidiFile:
         """
@@ -71,7 +76,7 @@ class MidiConverter:
         Args:
             midi: The MIDI file to augment.
         """
-        augmentations = data_augmentation_midi(
+        augmentations = augment_midi(
             midi=midi,
             tokenizer=self.tokenizer,
             pitch_offsets=[-3, -2, -1, 0, 1, 2, 3],
@@ -149,7 +154,8 @@ def convert_maestro_to_tokens(data_dir: str, max_workers: int = 10):
         data_dir: The directory to save the dataset to.
         max_workers: The number of workers to use for the conversion.
     """
-    tokenizer = Structured(beat_res={(0, 4): 32, (4, 12): 8})
+    config = TokenizerConfig(beat_res={(0, 4): 32, (4, 12): 8})
+    tokenizer = Structured(config)
 
     src_dir = os.path.join(data_dir, "maestro-v3.0.0")
     csv_file = os.path.join(src_dir, "maestro-v3.0.0.csv")
@@ -167,7 +173,7 @@ def convert_maestro_to_tokens(data_dir: str, max_workers: int = 10):
     for split in ["train", "test", "validation"]:
         os.makedirs(os.path.join(data_dir, split), exist_ok=True)
 
-    midi_converter = MidiConverter(tokenizer, src_dir, data_dir)
+    midi_converter = MidiConverter(tokenizer, src_dir, data_dir)  # type: ignore
 
     rows = [(row.split, row.midi_filename) for row in df.itertuples()]
 
@@ -176,7 +182,7 @@ def convert_maestro_to_tokens(data_dir: str, max_workers: int = 10):
             pass
 
 
-def download_file(url: str, fname: str):
+def download_file(url: str, fname: Path):
     response = requests.get(url, stream=True)
 
     total_size_in_bytes = int(response.headers.get("content-length", 0))
@@ -185,7 +191,7 @@ def download_file(url: str, fname: str):
         total=total_size_in_bytes,
         unit="iB",
         unit_scale=True,
-        desc="Downloading " + fname,
+        desc="Downloading " + fname.name,
     )
 
     with open(fname, "wb") as file:
@@ -196,16 +202,20 @@ def download_file(url: str, fname: str):
     progress_bar.close()
 
 
-def download_and_exctract_maestro(dest_dir: str):
+def download_maestro(dest_dir: Path):
     """
     Download and extract the MAESTRO dataset.
 
     Args:
         dest_dir: The directory to save the dataset to.
     """
-    if os.path.exists(os.path.join(dest_dir, "maestro-v3.0.0")):
+    if (
+        dest_dir.exists()
+        and dest_dir.is_dir()
+        and dest_dir.joinpath("maestro-v3.0.0").exists()
+    ):
         return
     os.makedirs(dest_dir, exist_ok=True)
-    download_file(maestro_zip, os.path.join(dest_dir, "maestro.zip"))
-    with zipfile.ZipFile(os.path.join(dest_dir, "maestro.zip"), "r") as zip_ref:
+    download_file(maestro_zip, dest_dir / "maestro.zip")
+    with zipfile.ZipFile(dest_dir / "maestro.zip", "r") as zip_ref:
         zip_ref.extractall(dest_dir)

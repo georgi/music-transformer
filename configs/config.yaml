@@ -25,7 +25,7 @@ defaults:
 work_dir: ${hydra:runtime.cwd}
 
 # path to folder with data
-data_dir: ${work_dir}/data/
+data_dir: ${work_dir}/data/chunks
 
 # use `python run.py debug=true` for easy debugging!
 # this will run 1 train, val and test loop with only 1 batch
@@ -43,7 +43,7 @@ ignore_warnings: True
 # lightning chooses best model based on metric specified in checkpoint callback
 test_after_training: True
 
-max_seq: 2048
-vocab_size: 509
+max_seq: 1024
+vocab_size: 30000
 
 ckpt: ""

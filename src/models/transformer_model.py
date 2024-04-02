@@ -1,9 +1,6 @@
 from typing import Any, Union, Tuple, Optional
-import torch
 from lightning.pytorch import LightningModule
 from transformers import (
-    TransfoXLConfig,
-    TransfoXLLMHeadModel,
     GPT2Config,
     GPT2LMHeadModel,
     GPTNeoXConfig,
@@ -17,32 +14,9 @@ class TransformerModel(LightningModule):
     This is a PyTorch Lightning module that defines a model using the Transformer architecture.
     The specific variant of the Transformer (GPT-2, GPTNeo, or TransfoXL) can be specified during
     the model's initialization.
-
-    1. The `TransformerModel` class extends the `LightningModule`, which is PyTorch Lightning's
-      base module class. It contains the logic for a full training/evaluation loop. The class contains
-      a transformer model from the Hugging Face's `transformers` library, which can be one of three
-      types: `TransfoXLLMHeadModel`, `GPT2LMHeadModel`, or `GPTNeoForCausalLM`.
-
-    2. The `__init__` method initializes the model. It takes a number of hyperparameters, including
-      the learning rate, beta values for the Adam optimizer, epsilon value for numerical stability in Adam,
-      weight decay for L2 regularization, the number of velocity bins and steps per second for the
-      Performance Encoder, and transformer model-specific hyperparameters like the number of positions,
-      layers, heads, and embeddings, attention types, and dropout rates. The architecture type is also specified here.
-
-    3. The `forward` method defines the forward pass of the model. It takes an input tensor `x`,
-      passes it through the transformer model, and calculates the loss. The calculation of the loss differs
-      depending on the transformer architecture used.
-
-    4. The `training_step` and `validation_step` methods define what happens during one training or
-      validation step, respectively. They both calculate and return the loss, and log it for progress tracking.
-
-    5. The `configure_optimizers` method sets up the optimizer and learning rate scheduler to be used
-      during training. It uses the Adam optimizer with parameters defined during initialization and
-      a cyclic learning rate scheduler.
-
     """
 
-    transformer: Union[TransfoXLLMHeadModel, GPT2LMHeadModel, GPTNeoXForCausalLM]
+    transformer: Union[GPT2LMHeadModel, GPTNeoXForCausalLM]
     total_steps: int = 0
 
     def __init__(
@@ -56,7 +30,7 @@ class TransformerModel(LightningModule):
         n_head: int,
         n_embed: int,
         vocab_size: int,
-        architecture: str = "gptneo",
+        architecture: str = "gpt",
         gradient_checkpointing: bool = False,
     ):
         super().__init__()
@@ -78,22 +52,7 @@ class TransformerModel(LightningModule):
             }
         )
 
-        if architecture == "transfoxl":
-            configuration = TransfoXLConfig(
-                vocab_size=vocab_size,
-                n_layer=n_layer,
-                n_head=n_head,
-                d_model=n_embed,
-                d_embed=n_embed,
-                d_head=n_embed // n_head,
-                d_inner=n_embed * 4,
-                mem_len=512,
-                clamp_len=512,
-                adaptive=False,
-                cutoffs=[0],
-            )
-            self.transformer = TransfoXLLMHeadModel(configuration)
-        elif architecture == "gpt2":
+        if architecture == "gpt2":
             configuration = GPT2Config(
                 vocab_size=vocab_size,
                 n_positions=n_positions,
@@ -118,13 +77,9 @@ class TransformerModel(LightningModule):
         else:
             raise RuntimeError("unknown architecture: " + architecture)
 
-    def forward(self, x: torch.Tensor):
-        output = self.transformer(x, labels=x)  # type: ignore
-        if self.hparams["architecture"] == "transfoxl":
-            loss = output.losses.mean()
-        else:
-            loss = output.loss
-        return loss
+    def forward(self, inputs: dict):
+        output = self.transformer(**inputs, labels=inputs["input_ids"])
+        return output.loss
 
     def training_step(self, batch: Any, _: int):
         loss = self.forward(batch)
@@ -163,7 +118,7 @@ class TransformerModel(LightningModule):
         ]
 
         optimizer = AdamW(
-            optimizer_grouped_parameters,
+            optimizer_grouped_parameters,  # type: ignore
             lr=self.hparams["lr"],
             betas=self.hparams["betas"],
         )
