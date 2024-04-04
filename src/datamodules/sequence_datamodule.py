@@ -53,7 +53,7 @@ class SequenceDataModule(LightningDataModule):
         """
         Returns a DataLoader instance for the given dataset split.
         """
-        data_dir = self.data_dir / split
+        data_dir = self.data_dir / split / "2004"
         dataset = DatasetMIDI(
             files_paths=list(data_dir.glob("**/*.mid")),
             tokenizer=self.tokenizer,

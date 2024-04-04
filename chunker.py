@@ -1,9 +1,6 @@
-import os
-import dotenv
 from pathlib import Path
-from miditok import REMI, MIDITokenizer, TokenizerConfig
-from miditok.pytorch_data import DatasetMIDI, DataCollator, split_midis_for_training
-from torch.utils.data import DataLoader
+from miditok import MIDITokenizer
+from miditok.pytorch_data import split_midis_for_training
 
 current_folder = Path(__file__).parent
 data_dir = current_folder / "data"
@@ -24,5 +21,5 @@ for split in ["train-augmented", "test", "validation"]:
         files_paths=midi_paths,
         tokenizer=tokenizer,
         save_dir=dataset_chunks_dir,
-        max_seq_len=1024,
+        max_seq_len=2048, # TODO: get this from config
     )

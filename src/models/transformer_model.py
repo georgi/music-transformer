@@ -3,8 +3,8 @@ from lightning.pytorch import LightningModule
 from transformers import (
     GPT2Config,
     GPT2LMHeadModel,
-    GPTNeoXConfig,
-    GPTNeoXForCausalLM,
+    LlamaConfig,
+    LlamaForCausalLM
 )
 from transformers import AdamW, get_cosine_with_hard_restarts_schedule_with_warmup
 
@@ -16,7 +16,7 @@ class TransformerModel(LightningModule):
     the model's initialization.
     """
 
-    transformer: Union[GPT2LMHeadModel, GPTNeoXForCausalLM]
+    transformer: Union[GPT2LMHeadModel, LlamaForCausalLM]
     total_steps: int = 0
 
     def __init__(
@@ -30,8 +30,7 @@ class TransformerModel(LightningModule):
         n_head: int,
         n_embed: int,
         vocab_size: int,
-        architecture: str = "gpt",
-        gradient_checkpointing: bool = False,
+        architecture: str,
     ):
         super().__init__()
 
@@ -62,18 +61,16 @@ class TransformerModel(LightningModule):
                 n_head=n_head,
             )
             self.transformer = GPT2LMHeadModel(configuration)
-        elif architecture == "gptneo":
-            configuration = GPTNeoXConfig(
+        elif architecture == "llama":
+            configuration = LlamaConfig(
                 vocab_size=vocab_size,
                 hidden_size=n_embed,
                 num_hidden_layers=n_layer,
                 num_attention_heads=n_head,
-                intermediate_size=n_embed * 4,
+                intermediate_size=n_embed * 2,
                 max_position_embeddings=n_positions,
-                use_cache=not gradient_checkpointing,
-                gradient_checkpointing=gradient_checkpointing,
             )
-            self.transformer = GPTNeoXForCausalLM(configuration)
+            self.transformer = LlamaForCausalLM(configuration)
         else:
             raise RuntimeError("unknown architecture: " + architecture)
 
@@ -97,28 +94,29 @@ class TransformerModel(LightningModule):
         return loss
 
     def configure_optimizers(self):
-        no_decay = ["bias", "LayerNorm.weight"]
-        optimizer_grouped_parameters = [
-            {
-                "params": [
-                    p
-                    for n, p in self.named_parameters()
-                    if not any(nd in n for nd in no_decay)
-                ],
-                "weight_decay": self.hparams["weight_decay"],
-            },
-            {
-                "params": [
-                    p
-                    for n, p in self.named_parameters()
-                    if any(nd in n for nd in no_decay)
-                ],
-                "weight_decay": 0.0,
-            },
-        ]
+        # no_decay = ["bias", "LayerNorm.weight"]
+        # optimizer_grouped_parameters = [
+        #     {
+        #         "params": [
+        #             p
+        #             for n, p in self.named_parameters()
+        #             if not any(nd in n for nd in no_decay)
+        #         ],
+        #         "weight_decay": self.hparams["weight_decay"],
+        #     },
+        #     {
+        #         "params": [
+        #             p
+        #             for n, p in self.named_parameters()
+        #             if any(nd in n for nd in no_decay)
+        #         ],
+        #         "weight_decay": 0.0,
+        #     },
+        # ]
 
         optimizer = AdamW(
-            optimizer_grouped_parameters,  # type: ignore
+            # optimizer_grouped_parameters,  # type: ignore
+            self.parameters(),
             lr=self.hparams["lr"],
             betas=self.hparams["betas"],
         )

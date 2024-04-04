@@ -54,5 +54,14 @@ if __name__ == "__main__":
             velocity_offsets=[-10, -5, 0, 5, 10],
             duration_offsets=[0, 1, 2],
         )
+    elif sys.argv[1] == "piano":
+        augment_midi_dataset(
+            data_path=data_dir / "piano",
+            out_path=data_dir / "piano-augmented",
+            duration_in_ticks=True,
+            pitch_offsets=[-2, -1, 0, 1, 2, 3],
+            velocity_offsets=[-10, 0],
+            duration_offsets=[0],
+        )
     else:
         raise ValueError("Unknown dataset!")
