@@ -48,6 +48,8 @@ class SequenceDataModule(LightningDataModule):
             use_programs=True,
             use_time_signatures=True,
             one_token_stream_for_programs=True,
+            num_velocities=8,
+            beat_res={(0, 4): 4, (4, 12): 4},
         )
         self.tokenizer = REMI(config)
 

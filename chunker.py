@@ -9,9 +9,14 @@ from typing import Sequence
 current_folder = Path(__file__).parent
 
 config = TokenizerConfig(
-    use_programs=True, use_time_signatures=True, one_token_stream_for_programs=True
+    use_programs=True,
+    use_time_signatures=True,
+    one_token_stream_for_programs=True,
+    num_velocities=8,
+    beat_res={(0, 4): 4, (4, 12): 4},
 )
 tokenizer = REMI(config)
+print(len(tokenizer.vocab))
 
 
 def get_average_num_tokens_per_note(
