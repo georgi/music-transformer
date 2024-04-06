@@ -1,7 +1,7 @@
 _target_: src.datamodules.sequence_datamodule.SequenceDataModule
 
-data_dir: ${data_dir} # data_dir is specified in config.yaml
-batch_size: 4
+data_dir: ${data_dir}/lmd_chunks/
+batch_size: 1
 num_workers: 1
 pin_memory: true
 max_seq: ${max_seq}

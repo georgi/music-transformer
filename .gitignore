@@ -148,3 +148,6 @@ wandb/
 *.ckpt
 
 .ipynb_checkpoints
+
+notebooks/*.mid
+notebooks/*.midi

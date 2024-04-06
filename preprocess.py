@@ -2,7 +2,7 @@ import shutil
 import dotenv
 import pandas as pd
 from src.data import (
-    convert_snes_to_tokens,
+    download_lmd_clean,
     download_maestro,
 )
 from miditok.data_augmentation import augment_midi_dataset
@@ -37,8 +37,8 @@ if __name__ == "__main__":
             os.makedirs(data_dir / split, exist_ok=True)
 
         for row in df.itertuples():
-            filename = str(row.midi_filename)
-            split = str(row.split)
+            filename = str(row.midi_filename)  # type: ignore
+            split = str(row.split)  # type: ignore
             dirname = os.path.dirname(filename)
             os.makedirs(data_dir / split / dirname, exist_ok=True)
             shutil.copy(
@@ -54,14 +54,7 @@ if __name__ == "__main__":
             velocity_offsets=[-10, -5, 0, 5, 10],
             duration_offsets=[0, 1, 2],
         )
-    elif sys.argv[1] == "piano":
-        augment_midi_dataset(
-            data_path=data_dir / "piano",
-            out_path=data_dir / "piano-augmented",
-            duration_in_ticks=True,
-            pitch_offsets=[-2, -1, 0, 1, 2, 3],
-            velocity_offsets=[-10, 0],
-            duration_offsets=[0],
-        )
+    elif sys.argv[1] == "lmd":
+        download_lmd_clean(data_dir / "lmd")
     else:
         raise ValueError("Unknown dataset!")

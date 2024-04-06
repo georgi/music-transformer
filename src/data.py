@@ -2,6 +2,7 @@ from copy import deepcopy
 import os
 from pathlib import Path
 import random
+import tarfile
 import pandas as pd
 from concurrent.futures import ProcessPoolExecutor
 import requests
@@ -16,6 +17,7 @@ from miditok.data_augmentation import augment_midi
 
 maestro_zip = "https://storage.googleapis.com/magentadata/datasets/maestro/v3.0.0/maestro-v3.0.0-midi.zip"
 maestro_csv = "https://storage.googleapis.com/magentadata/datasets/maestro/v3.0.0/maestro-v3.0.0.csv"
+lmd_clean_tgz = "http://hog.ee.columbia.edu/craffel/lmd/clean_midi.tar.gz"
 
 
 class MidiConverter:
@@ -219,3 +221,19 @@ def download_maestro(dest_dir: Path):
     download_file(maestro_zip, dest_dir / "maestro.zip")
     with zipfile.ZipFile(dest_dir / "maestro.zip", "r") as zip_ref:
         zip_ref.extractall(dest_dir)
+
+
+def download_lmd_clean(dest_dir: Path):
+    """
+    Download and extract the Lakh MIDI Dataset (clean MIDI files).
+
+    Args:
+        dest_dir: The directory to save the dataset to.
+    """
+    if dest_dir.exists() and dest_dir.is_dir():
+        return
+    os.makedirs(dest_dir, exist_ok=True)
+    download_file(lmd_clean_tgz, dest_dir / "lmd_clean.tgz")
+
+    with tarfile.open(dest_dir / "lmd_clean.tgz", "r:gz") as tar:
+        tar.extractall(dest_dir, filter=lambda x, _: x if x.isreg() else None)

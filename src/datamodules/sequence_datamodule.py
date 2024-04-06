@@ -1,12 +1,11 @@
-import os
 from pathlib import Path
-from typing import Optional, List
 from lightning.pytorch import LightningDataModule
 from miditok import MIDITokenizer
 from torch.utils.data import DataLoader
-from .datasets.sequence_dataset import SequenceDataset
 from miditok.pytorch_data import DatasetMIDI, DataCollator
+from miditok import REMI, TokenizerConfig
 import logging
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -44,16 +43,20 @@ class SequenceDataModule(LightningDataModule):
         self.num_workers = num_workers
         self.pin_memory = pin_memory
         self.max_seq = max_seq
-        self.tokenizer = MIDITokenizer.from_pretrained(
-            "mgeorgi/music-transformer",
-            private=True,
+
+        config = TokenizerConfig(
+            use_programs=True, 
+            use_time_signatures=True,
+            one_token_stream_for_programs=True
         )
+        self.tokenizer = REMI(config)
+
 
     def get_dataloader(self, split: str) -> DataLoader:
         """
         Returns a DataLoader instance for the given dataset split.
         """
-        data_dir = self.data_dir / split / "2004"
+        data_dir = self.data_dir / split
         dataset = DatasetMIDI(
             files_paths=list(data_dir.glob("**/*.mid")),
             tokenizer=self.tokenizer,
@@ -76,10 +79,10 @@ class SequenceDataModule(LightningDataModule):
         pass
 
     def train_dataloader(self):
-        return self.get_dataloader("train")
+        return self.get_dataloader("A")
 
-    def val_dataloader(self):
-        return self.get_dataloader("validation")
+    # def val_dataloader(self):
+    #     return self.get_dataloader("B")
 
     def test_dataloader(self):
-        return self.get_dataloader("test")
+        return self.get_dataloader("C")
