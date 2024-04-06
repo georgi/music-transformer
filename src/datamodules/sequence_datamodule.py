@@ -45,18 +45,17 @@ class SequenceDataModule(LightningDataModule):
         self.max_seq = max_seq
 
         config = TokenizerConfig(
-            use_programs=True, 
+            use_programs=True,
             use_time_signatures=True,
-            one_token_stream_for_programs=True
+            one_token_stream_for_programs=True,
         )
         self.tokenizer = REMI(config)
-
 
     def get_dataloader(self, split: str) -> DataLoader:
         """
         Returns a DataLoader instance for the given dataset split.
         """
-        data_dir = self.data_dir / split
+        data_dir = self.data_dir
         dataset = DatasetMIDI(
             files_paths=list(data_dir.glob("**/*.mid")),
             tokenizer=self.tokenizer,
@@ -79,10 +78,4 @@ class SequenceDataModule(LightningDataModule):
         pass
 
     def train_dataloader(self):
-        return self.get_dataloader("A")
-
-    # def val_dataloader(self):
-    #     return self.get_dataloader("B")
-
-    def test_dataloader(self):
-        return self.get_dataloader("C")
+        return self.get_dataloader("")
