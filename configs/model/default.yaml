@@ -8,5 +8,5 @@ weight_decay: 0.1
 n_positions: ${max_seq}
 vocab_size: ${vocab_size}
 n_embed: 512
-n_head: 32
-n_layer: 16
+n_head: 16
+n_layer: 8
